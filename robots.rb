@@ -14,7 +14,7 @@
 #   bundle exec ruby robots.rb 
 #
 #
-# TODO: Add firing of weapons and handing of end game
+# TODO: Add handing of end game
 # TODO: Add updating of JSON version of board and sending it back on status requests
 #
 
@@ -159,12 +159,29 @@ class Game
   end
   
   def fire_weapon(player)
-    # TODO
+    # check for players in the way and hit them!
+    target = case player.facing
+    when 'N'
+      Player.all(:x_pos.lt => player.x_pos, :y_pos => player.y_pos, :order => [:x_pos.desc]).first
+    when 'E'
+      Player.all(:x_pos => player.x_pos, :y_pos.gt => player.y_pos, :order => [:x_pos.asc]).first
+    when 'S'
+      Player.all(:x_pos.gt => player.x_pos, :y_pos => player.y_pos, :order => [:x_pos.asc]).first
+    when 'W'
+      Player.all(:x_pos => player.x_pos, :y_pos.lt => player.y_pos, :order => [:x_pos.asc]).first
+    end
+    if target
+      # target loses a hitpoint, and if reduced to zero is DEAD
+      target.hp -= 1
+      target.save
+      player.score += 1
+      player.save
+    end
   end
   
   # See if we should run a game turn
   def tick
-    if players.all?{|p| %w(waiting quit).include?(p.state)} and not processing
+    if players.all?{|p| %w(waiting quit lost).include?(p.state)} and not processing
       self.processing = true
       save
       
@@ -181,9 +198,11 @@ class Game
       # update turn
       self.turn += 1
       # update players state
+      lost_count = 0
       players.each do |p|
         if p.state == 'waiting'
           p.state = if p.hp <= 0
+            lost_count += 1
             'lost'
           elsif p.score >= SCORE_TO_WIN
             self.winner = p
@@ -194,6 +213,7 @@ class Game
           p.save
         end
       end
+
       self.processing = false
       save
     end
