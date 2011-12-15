@@ -1,0 +1,6 @@
+This is a hacked up sample game server for use during the
+SacRuby December 2011 learning hack-a-thon.
+
+It was originally assembled by Christopher Haupt (twitter.com/chaupt) as a visual example of using 
+Sinatra for UI or APIs.
+

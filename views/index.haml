@@ -1,0 +1,69 @@
+%header
+  %h1
+    Robots! 
+  %h3
+    A simple game inspired by the classic Daleks!
+
+- unless @games.empty?
+  %section#active_games
+    #games
+      %table(border="0" cellpadding="0" cellspacing="10" class="list")
+        %tr
+          %th
+            Game ID
+          %th
+            Game Name
+          %th
+            Current Turn
+          %th
+            Number of Players
+          %th 
+            Winner
+          %th
+            Size
+          %th
+        - @games.each_with_index do |game,i|
+          %tr{:class => ("alt" if i%2==0)}
+            %td
+              = game.id 
+            %td
+              = game.name 
+            %td
+              = game.active? ? game.turn : "Complete"
+            %td
+              = game.players.count
+            %td
+              = game.winner ? game.winner.name : nil
+            %td
+              = game.board_size
+            %td
+              %a{:href => "/game/#{game.id}"}
+                Details
+            
+  %section#join_game
+    %h3
+      Join an Existing Game
+    %form(action="/join" method="post" id="join" enctype="multipart/form-data")
+      %label
+        Game Number
+      %input(type="text" name="id")
+      %label
+        Player Name
+      %input(type="text" name="name")
+      %input(type="submit" value="join")
+
+%section#new_game
+  %h3
+    Create a New Game
+  %form(action="/game" method="post"  id="new" enctype="multipart/form-data")
+    %label
+      Game Name
+    %input(type="text" name="name")
+    %label
+      Game Size (10-100)
+    %input(type="text" name="size")
+    %input(type="submit" value="game")
+    
+%footer
+  %p
+    A SacRuby Production

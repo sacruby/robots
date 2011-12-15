@@ -1,0 +1,26 @@
+%p
+  %b Name:
+  = @game.name
+%p
+  %b Size:
+  = @game.board_size
+- if @game.active
+  %p
+    %b Current Turn:
+    = @game.turn
+- else
+  %p
+    %b Game Over:
+%p
+  %b 
+    Players:
+  %ol
+    - @game.players.each do |player|
+      %li
+        %a{:href => "/player/#{player.id}"}
+          = "#{player.name} (#{player.id})"
+%p
+  %b Map:
+  .map-display
+    = @game.draw("<br />")
+

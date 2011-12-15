@@ -1,0 +1,15 @@
+!!! 5
+%html
+  %head
+    %title
+      = @title
+    %link(rel="stylesheet" href="/css/style.css" type="text/css")
+  %body
+    %ul.nav
+      %li
+        %a(href="/")
+          Home
+      %li
+        = Time.now.strftime("%H:%M:%S")
+    .clear
+    = yield 

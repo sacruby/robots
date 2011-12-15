@@ -1,0 +1,79 @@
+%p
+  %b Name:
+  = @player.name
+%p
+  %b ID:
+  = @player.id
+%p
+  %b HP:
+  = @player.hp
+%p
+  %b Score:
+  = @player.score
+%p
+  %b Facing:
+  = @player.facing
+%p
+  %b State:
+  = @player.state
+%p
+  %b Orders:
+  = @player.orders
+%p
+  %b Position:
+  = "(#{@player.x_pos},#{@player.y_pos})"
+%p
+  %b Game ID:
+  = @game.id
+%p
+  %b Game Current Turn:
+  = @game.turn
+%p
+  %b Game Map Size:
+  = @game.board_size
+%p
+  %b Game Map:
+  .map-display
+    = @game.draw("<br />")
+  %p
+    You are player: #{@player.id}
+    .pre
+      :plain
+        < W ^ N > E v S
+    %a{:href=>"/player/#{@player.id}"}
+      Refresh
+    
+
+%h2= @message  
+%p
+  Orders are a string of characters using this key:
+%ul
+  %li
+    F = move forward one space
+  %li
+    R = turn 90 clockwise
+  %li
+    L = turn 90 counterclockwise
+  %li
+    :plain
+      . = idle (noop)
+  %li
+    X = fire shot
+  
+%section#orders
+  %h3
+    Submit Orders
+  %form(action="/turn/#{@player.id}" method="post"  id="new-orders" enctype="multipart/form-data")
+    %label
+      Orders
+    %input(type="text" name="orders")
+    %input(type="submit" value="orders")
+
+%section#quit
+  %h3
+    Quit Game
+  %form(action="/leave/#{@player.id}" method="post"  id="quit-game" enctype="multipart/form-data")
+    %input(type="hidden" name="orders" value="...")
+    %input(type="submit" value="quit game")
+
+  

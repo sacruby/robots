@@ -1,0 +1,10 @@
+source :rubygems
+  gem 'sinatra'
+  gem 'thin'
+  gem 'haml'                   
+  gem 'data_mapper'
+  gem 'dm-sqlite-adapter'
+  gem 'do_sqlite3'
+  gem 'sqlite3'
+  gem 'json'
+  gem 'mime-types'
