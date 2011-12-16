@@ -1,36 +1,38 @@
-%p
-  %b Name:
-  = @player.name
-%p
-  %b ID:
-  = @player.id
-%p
-  %b HP:
-  = @player.hp
-%p
-  %b Score:
-  = @player.score
-%p
-  %b Facing:
-  = @player.facing
-%p
-  %b State:
-  = @player.state
-%p
-  %b Orders:
-  = @player.orders
-%p
-  %b Position:
-  = "(#{@player.x_pos},#{@player.y_pos})"
-%p
-  %b Game ID:
-  = @game.id
-%p
-  %b Game Current Turn:
-  = @game.turn
-%p
-  %b Game Map Size:
-  = @game.board_size
+.left
+  %p
+    %b Name:
+    = @player.name
+  %p
+    %b ID:
+    = @player.id
+  %p
+    %b HP:
+    = @player.hp
+  %p
+    %b Score:
+    = @player.score
+  %p
+    %b Facing:
+    = @player.facing
+  %p
+    %b State:
+    = @player.state
+  %p
+    %b Orders:
+    = @player.orders
+  %p
+    %b Position:
+    = "(#{@player.x_pos},#{@player.y_pos})"
+.right
+  %p
+    %b Game ID:
+    = @game.id
+  %p
+    %b Game Current Turn:
+    = @game.turn
+  %p
+    %b Game Map Size:
+    = @game.board_size
 %p
   %b Game Map:
   .map-display

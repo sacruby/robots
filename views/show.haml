@@ -1,6 +1,10 @@
+:javascript
+  var timer = window.setInterval(function(){location.href='/game/#{@game.id}'}, 5000);
+  
 %p
   %b Name:
   = @game.name
+  = "(#{@game.processing})"
 %p
   %b Size:
   = @game.board_size
@@ -18,9 +22,17 @@
     - @game.players.each do |player|
       %li
         %a{:href => "/player/#{player.id}"}
-          = "#{player.name} (#{player.id})"
+          = "#{player.name} (#{player.id}) #{player.state} (#{player.hp} / #{player.score})"
+%section#tick
+  %h3
+    Tick
+  %form(action="/tick/#{@game.id}" method="post"  id="tick-game" enctype="multipart/form-data")
+    %input(type="hidden" name="tick" value="...")
+    %input(type="submit" value="tick game")
+
 %p
   %b Map:
   .map-display
     = @game.draw("<br />")
 
+  

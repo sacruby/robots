@@ -14,8 +14,7 @@
 #   bundle exec ruby robots.rb 
 #
 #
-# TODO: Add handing of end game
-# TODO: Add updating of JSON version of board and sending it back on status requests
+# TODO: Add handling of end game better
 #
 
 require 'rubygems'
@@ -38,7 +37,6 @@ class Game
   property :id,   Serial
   property :name, String
   property :board_size, Integer
-  property :board, Text
   property :turn, Integer
   property :active, Boolean
   has n, :players
@@ -85,8 +83,29 @@ class Game
     buf
   end
   
-  def self.initialize_board(rows,cols)
-    "." * (rows * cols)
+  def board_as_array
+    player_positions = {}
+    players.each do |p| 
+      unless p.state == 'quit'
+        player_positions[p.x_pos] ||= {}
+        player_positions[p.x_pos][p.y_pos] = p
+      end
+    end
+    buf = []
+    size = board_size - 1
+    for x in 0..size do
+      row = []
+      for y in 0..size do
+        if p = (player_positions[x] && player_positions[x][y])
+          spot = "#{p.id}#{FACINGS_VISUAL[p.facing]}"
+        else
+          spot = '.'
+        end
+        row << spot
+      end
+      buf << row
+    end
+    buf
   end
   
   # find a location on virtual board without another player
@@ -112,7 +131,7 @@ class Game
   end
   
   def game_hash
-    {:name => name, :id => id, :board_size => board_size, :turn => turn, :board => board, :active => active}
+    {:name => name, :id => id, :board_size => board_size, :turn => turn, :board => board_as_array, :active => active}
   end
   
   # Resolve orders
@@ -181,7 +200,7 @@ class Game
   
   # See if we should run a game turn
   def tick
-    if players.all?{|p| %w(waiting quit lost).include?(p.state)} and not processing
+    if players.all?{|p| %w(waiting quit lost won ready).include?(p.state)} and not processing
       self.processing = true
       save
       
@@ -213,7 +232,15 @@ class Game
           p.save
         end
       end
-
+      
+      if winner
+        players.each do |p| 
+          if p.score < SCORE_TO_WIN and !%(won quit).include?(p.state)
+            p.state = 'lost'; p.save
+          end
+        end
+      end
+      
       self.processing = false
       save
     end
@@ -294,7 +321,7 @@ end
 post '/game' do
   size = params[:size].to_i
   size = [[size, Game::MAX_BOARD_SIZE].min, Game::MIN_BOARD_SIZE].max
-  @game = Game.new(:turn => 1, :name => params[:name], :board_size => size, :active => true, :board => Game.initialize_board(size,size))
+  @game = Game.new(:turn => 1, :name => params[:name], :board_size => size, :active => true)
   if @game.save
     redirect "/game/#{@game.id}"
   else
@@ -348,6 +375,18 @@ post '/join', :provides => 'html' do
   end
 end
 
+# API: /player/:id (player id)
+# Get current player status/details
+# Returns JSON version of
+# {:id => id, :name => name, :x => x_pos, :y => y_pos, :facing => facing, :hp => hp, :score => score, :state => state, :orders => orders}
+get '/player/:id', :provides => 'json' do  
+  if @player = Player.get(params[:id])
+    @player.player_hash.to_json
+  else
+    pass
+  end
+end
+
 # UI
 # Get Player details
 get '/player/:id', :provides => 'html' do  
@@ -359,13 +398,22 @@ get '/player/:id', :provides => 'html' do
   end
 end
 
-# API: /player/:id (player id)
-# Get current player status/details
-# Returns JSON version of
+# API /turn/:id (player id)
+# Submit your turn
+# POST params
+#   orders = string of 3 characters from order command codes
+# Returns JSON version of 
 # {:id => id, :name => name, :x => x_pos, :y => y_pos, :facing => facing, :hp => hp, :score => score, :state => state, :orders => orders}
-get '/player/:id', :provides => 'json' do  
+post '/turn/:id', :provides => 'json' do
   if @player = Player.get(params[:id])
-    @player.player_hash.to_json
+    if @player.state == 'ready'
+      @player.enter_orders(params[:orders])
+      @player.game.tick
+      @player.reload      
+      @player.player_hash.to_json
+    else
+      halt
+    end
   else
     pass
   end
@@ -396,27 +444,6 @@ post '/turn/:id', :provides => 'html' do
   end
 end
 
-# API /turn/:id (player id)
-# Submit your turn
-# POST params
-#   orders = string of 3 characters from order command codes
-# Returns JSON version of 
-# {:id => id, :name => name, :x => x_pos, :y => y_pos, :facing => facing, :hp => hp, :score => score, :state => state, :orders => orders}
-post '/turn/:id', :provides => 'json' do
-  if @player = Player.get(params[:id])
-    if @player.state == 'ready'
-      @player.enter_orders(params[:orders])
-      @player.game.tick
-      @player.reload
-      @player.player_hash.to_json
-    else
-      halt
-    end
-  else
-    pass
-  end
-end
-
 # UI:
 # Quit a game
 post '/leave/:id', :provides => 'html' do
@@ -437,6 +464,18 @@ post '/leave/:id', :provides => 'json' do
   if @player = Player.get(params[:id])
     @player.leave_game
     @player.player_hash.to_json
+  else
+    pass
+  end
+end
+
+# UI:
+# Quit a game
+post '/tick/:id', :provides => 'html' do
+  if @game = Game.get(params[:id])
+    @game.processing = false
+    @game.tick
+    haml :show
   else
     pass
   end
