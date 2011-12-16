@@ -97,7 +97,9 @@ class Game
       row = []
       for y in 0..size do
         if p = (player_positions[x] && player_positions[x][y])
-          spot = "#{p.id}#{FACINGS_VISUAL[p.facing]}"
+          puts "Player: #{p.id} #{p.hp}"
+          facing = p.hp > 0 ? FACINGS_VISUAL[p.facing] : '*'
+          spot = "#{p.id}#{facing}"
         else
           spot = '.'
         end
@@ -189,7 +191,7 @@ class Game
     when 'W'
       Player.all(:x_pos => player.x_pos, :y_pos.lt => player.y_pos, :order => [:x_pos.asc]).first
     end
-    if target
+    if target and target.hp > 0
       # target loses a hitpoint, and if reduced to zero is DEAD
       target.hp -= 1
       target.save
@@ -239,6 +241,7 @@ class Game
             p.state = 'lost'; p.save
           end
         end
+        self.active = false
       end
       
       self.processing = false
@@ -375,17 +378,6 @@ post '/join', :provides => 'html' do
   end
 end
 
-# API: /player/:id (player id)
-# Get current player status/details
-# Returns JSON version of
-# {:id => id, :name => name, :x => x_pos, :y => y_pos, :facing => facing, :hp => hp, :score => score, :state => state, :orders => orders}
-get '/player/:id', :provides => 'json' do  
-  if @player = Player.get(params[:id])
-    @player.player_hash.to_json
-  else
-    pass
-  end
-end
 
 # UI
 # Get Player details
@@ -398,26 +390,19 @@ get '/player/:id', :provides => 'html' do
   end
 end
 
-# API /turn/:id (player id)
-# Submit your turn
-# POST params
-#   orders = string of 3 characters from order command codes
-# Returns JSON version of 
+
+# API: /player/:id (player id)
+# Get current player status/details
+# Returns JSON version of
 # {:id => id, :name => name, :x => x_pos, :y => y_pos, :facing => facing, :hp => hp, :score => score, :state => state, :orders => orders}
-post '/turn/:id', :provides => 'json' do
+get '/player/:id', :provides => 'json' do  
   if @player = Player.get(params[:id])
-    if @player.state == 'ready'
-      @player.enter_orders(params[:orders])
-      @player.game.tick
-      @player.reload      
-      @player.player_hash.to_json
-    else
-      halt
-    end
+    @player.player_hash.to_json
   else
     pass
   end
 end
+
 
 # pass orders, which is a string of one of
 # F = move forward one space
@@ -444,6 +429,26 @@ post '/turn/:id', :provides => 'html' do
   end
 end
 
+# API /turn/:id (player id)
+# Submit your turn
+# POST params
+#   orders = string of 3 characters from order command codes
+# Returns JSON version of 
+# {:id => id, :name => name, :x => x_pos, :y => y_pos, :facing => facing, :hp => hp, :score => score, :state => state, :orders => orders}
+post '/turn/:id', :provides => 'json' do
+  if @player = Player.get(params[:id])
+    if @player.state == 'ready'
+      @player.enter_orders(params[:orders])
+      @player.game.tick
+      @player.reload      
+      @player.player_hash.to_json
+    else
+      halt
+    end
+  else
+    pass
+  end
+end
 # UI:
 # Quit a game
 post '/leave/:id', :provides => 'html' do
