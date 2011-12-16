@@ -1,6 +1,20 @@
 :javascript
-  var timer = window.setInterval(function(){location.href='/game/#{@game.id}'}, 5000);
-  
+  $(function(){
+    var timer = null;
+    $("#refreshthing").click(function(){
+      if (timer) {
+        clearInterval(timer);
+        timer=null;
+        $(this).text("Auto Refresh Off");
+      } else {
+        timer = window.setInterval(function(){location.href='/game/#{@game.id}'}, 5000);
+        $(this).text("Auto Refresh On");
+      }
+    });
+  });
+%p 
+  %button#refreshthing
+    Auto Refresh Off
 %p
   %b Name:
   = @game.name
